@@ -1,7 +1,7 @@
 ---
 published: false
 title: 'Deploying Next.js 13 with Amplify CDK'
-cover_image:
+cover_image: './assets/cover-image.png'
 description: 'How to deploy a Next.js app on AWS Amplify with a CDK construct'
 tags: aws, cdk, nextjs, amplify
 series:
@@ -24,10 +24,7 @@ To deploy with the AWS CDK, you would first need to declare a `cdk.json` file at
 
 ```json
 {
-  "app": "pnpm ts-node hosting/bin.ts",
-  "context": {
-    "@aws-cdk/core:newStyleStackSynthesis": "true"
-  }
+  "app": "pnpm ts-node hosting/bin.ts"
 }
 ```
 
@@ -78,6 +75,8 @@ export class AmplifyStack extends Stack {
     new CfnOutput(this, 'appId', {
       value: amplifyApp.appId,
     });
+
+    // Add a custom resource to deploy correctly to Amplify
   }
 }
 ```
@@ -97,6 +96,7 @@ const role = new Role(this, 'AmplifyRoleWebApp', {
       assumedBy: new ServicePrincipal('amplify.amazonaws.com'),
       description: 'Custom role permitting resources creation from Amplify',
       managedPolicies: [
+        // A more restricted policy than AdministratorAccess should be used
         ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
       ],
     }
@@ -112,7 +112,7 @@ import { GitHubSourceCodeProvider } from '@aws-cdk/aws-amplify-alpha/lib/source-
 import { SecretValue } from 'aws-cdk-lib';
 
 const sourceCodeProvider = new GitHubSourceCodeProvider({
-  oauthToken: SecretValue.unsafePlainText(process.env.GITHUB_TOKEN!),
+  oauthToken: SecretValue.secretsManager('<GITHUB_TOKEN_KEY>'), // GitHub token has to be set in AWS Secret Manager
   owner: '<owner of the repository>',
   repository: '<name of the Github repository>',
 });
@@ -240,6 +240,8 @@ Before being able to detect and deploy Next.js, Amplify needs to be configured w
 aws amplify update-app --app-id <yourAppID> --platform  WEB_COMPUTE
 ```
 
+You can also use a CDK custom resource
+
 ### Adding a webhook
 
 In many cases, a dedicated CI/CD platform is used to test and deploy an app. Then, the direct GitHub integration that triggers an Amplify build at each push on a particular branch is no more sufficient. So you may want to trigger a deployment directly in a CD step. Amplify allows to trigger a deployment with webhooks. This is not yet configurable through the CDK but you can use the Amplify CLI:
@@ -249,6 +251,8 @@ aws amplify create-webhook --app-id <yourAppID> --branch-name <yourBranchName>
 ```
 
 [https://awscli.amazonaws.com/v2/documentation/api/latest/reference/amplify/create-webhook.html](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/amplify/create-webhook.html)
+
+In your CD, add `curl [webhook url]`
 
 ### Other interesting features
 
