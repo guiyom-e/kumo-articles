@@ -1,10 +1,12 @@
-# Kumo template to sync articles with dev.to
+# Dev To blog source
 
-## Follow the first install doc
+https://dev.to/guiyome
 
-==> [First installation](./docs/install.md) <==
+## Blog posts
 
-## Read documentation
+- [Deploying NextJs 13 with Amplify CDK](https://dev.to/\<BLOG POST LINK\>)
+
+## Documentation
 
 - [Context](./docs/context.md)
 - [Usage](./docs/usage.md)
