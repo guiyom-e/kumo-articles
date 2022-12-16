@@ -5,7 +5,7 @@ cover_image:
 description: 'How to deploy a Next.js app on AWS Amplify with a CDK construct'
 tags: aws cdk nextjs amplify
 series:
-canonical_url: deploying-nextjs-13-with-amplify-cdk
+canonical_url:
 ---
 
 > 📜 We detail step by step how to deploy a Next.js app with a Amplify CDK construct, avoiding you all the pains.
