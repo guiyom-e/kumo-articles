@@ -3,7 +3,7 @@ published: false
 title: 'Deploying Next.js 13 with Amplify CDK'
 cover_image:
 description: 'How to deploy a Next.js app on AWS Amplify with a CDK construct'
-tags: aws cdk nextjs amplify
+tags: aws, cdk, nextjs, amplify
 series:
 canonical_url:
 ---
