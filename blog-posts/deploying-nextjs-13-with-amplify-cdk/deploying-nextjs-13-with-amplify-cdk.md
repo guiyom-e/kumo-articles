@@ -35,9 +35,13 @@ You need to install dependencies:
 ```bash
 pnpm add --dev aws-cdk-lib
 pnpm add --dev @aws-cdk/aws-amplify-alpha
-pnpm add --dev aws-cdk-lib/aws-codebuild
 pnpm add --dev constructs
 ```
+
+You will also need some configuration files to bootstrap the app:
+
+- `.nvmrc` file to define your node version
+- `tsconfig.json` TypeScript configuration file, with `target` version set to "es6" or more
 
 In the `hosting` folder, you then need to add a `bin.ts` file to declare the `cdk` app:
 
@@ -48,7 +52,7 @@ import { AmplifyStack } from './stack';
 
 const app = new cdk.App();
 
-new AmplifyStack(app, 'My Cloudformation Next.js Stack', {
+new AmplifyStack(app, 'NextJsSampleStack', {
   description: 'Cloudformation stack containing the Amplify configuration',
 });
 ```
@@ -82,15 +86,13 @@ export class AmplifyStack extends Stack {
 
     // Attach your main branch and define the branch settings (see below)
     const mainBranch = amplifyApp.addBranch('main', {
-      autoBuild: true, // true to automatically build the on new pushes
+      autoBuild: false, // set to true to automatically build the app on new pushes
       stage: 'PRODUCTION',
     });
 
     new CfnOutput(this, 'appId', {
       value: amplifyApp.appId,
     });
-
-    // Add a custom resource to deploy correctly to Amplify
   }
 }
 ```
@@ -109,10 +111,7 @@ import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 const role = new Role(this, 'AmplifyRoleWebApp', {
   assumedBy: new ServicePrincipal('amplify.amazonaws.com'),
   description: 'Custom role permitting resources creation from Amplify',
-  managedPolicies: [
-    // A more restricted policy than AdministratorAccess should be used
-    ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
-  ],
+  managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess-Amplify')],
 });
 ```
 
@@ -125,13 +124,16 @@ import { GitHubSourceCodeProvider } from '@aws-cdk/aws-amplify-alpha/lib/source-
 import { SecretValue } from 'aws-cdk-lib';
 
 const sourceCodeProvider = new GitHubSourceCodeProvider({
-  oauthToken: SecretValue.secretsManager('<GITHUB_TOKEN_KEY>'), // GitHub token has to be set in AWS Secret Manager
-  owner: '<owner of the repository>',
+  // GitHub token should be saved in a secure place, we recommend AWS Secret Manager:
+  oauthToken: SecretValue.secretsManager('GITHUB_TOKEN_KEY'), // replace GITHUB_TOKEN_KEY by the name of the Secrets Manager resource storing your GitHub token
+  owner: '<user name of the GitHub repository owner>',
   repository: '<name of the Github repository>',
 });
 ```
 
 To get a Github token, go to your Github account develop settings and generate a personal access token. Amplify will need quite high access rights to your repository as it will need to generate ssh keys to clone the repository.
+
+To store the token in AWS, we recommend to use the [AWS Secret Manager](https://aws.amazon.com/secrets-manager) service. Be careful to choose a plain text secret (in the AWS console select "Store a new secret", "Other type of secret" and finally "Plaintext"). Choose a key name that matches the key used in the `GitHubSourceCodeProvider` construct (`GITHUB_TOKEN_KEY` in this example).
 
 ### Build settings (`buildSpec`)
 
@@ -175,7 +177,6 @@ export const buildSpec = BuildSpec.fromObjectToYaml({
         artifacts: {
           baseDirectory: '.next',
           files: ['**/*'],
-          'discard-paths': 'yes',
         },
       },
     },
@@ -239,7 +240,35 @@ domain.mapRoot(mainBranch);
 
 ### Deployment
 
-To deploy your AWS CDK app, navigate to the folder containing the `cdk.json` file, then enter the following command:
+Almost there! Before being able to detect and deploy Next.js, Amplify needs to be configured with the platform type `WEB_COMPUTE`. It needs to be done after Amplify app deployment. As there is no option in Cloudformation for now, the best way to do it programmatically is to use a Custom Resource construct:
+
+```ts
+import { AwsCustomResource, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resource';
+
+// Set Amplify platform type to WEB_COMPUTE
+new AwsCustomResource(this, 'AmplifySetPlatform', {
+  onUpdate: {
+    service: 'Amplify',
+    action: 'updateApp',
+    parameters: {
+      appId: amplifyApp.appId,
+      platform: 'WEB_COMPUTE',
+    },
+    physicalResourceId: PhysicalResourceId.of('AmplifyCustomResourceSetPlatform'),
+  },
+  policy: AwsCustomResourcePolicy.fromSdkCalls({
+    resources: [amplifyApp.arn],
+  }),
+});
+```
+
+> 💡 This construct is equivalent to a call to AWS SDK, that can also be written with an `aws` CLI command:
+
+```bash
+aws amplify update-app --app-id <yourAppID> --platform  WEB_COMPUTE
+```
+
+Finally, to deploy your AWS CDK app, navigate to the folder containing the `cdk.json` file, then enter the following command:
 
 ```bash
 pnpm cdk bootstrap && pnpm cdk deploy
@@ -247,13 +276,10 @@ pnpm cdk bootstrap && pnpm cdk deploy
 
 When the deployment ends successfully, the id of your Amplify app will be printed in your command line interface.
 
-Before being able to detect and deploy Next.js, Amplify needs to be configured with the platform type `WEB_COMPUTE`. As there is no option in CDK for now, the best way to do it programmatically is to use `aws` CLI. To do so, get the app id printed in the previous step and run:
-
-```bash
-aws amplify update-app --app-id <yourAppID> --platform  WEB_COMPUTE
-```
-
-You can also use a CDK custom resource
+> ⚠️ This step only deploys an Amplify stack, but it does not build nor deploy the Next.js app yet! To do so, you can either:
+>
+> - Set the `autoBuild` parameter to `true` in a branch setting to deploy on GitHub pushes (or other source provider)
+> - Use a webhook as explained below.
 
 ### Adding a webhook
 
@@ -265,7 +291,30 @@ aws amplify create-webhook --app-id <yourAppID> --branch-name <yourBranchName>
 
 [https://awscli.amazonaws.com/v2/documentation/api/latest/reference/amplify/create-webhook.html](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/amplify/create-webhook.html)
 
-In your CD, add `curl [webhook url]`
+In your CD, add `curl [webhook url]`.
+
+> 💡 Alternatively, you can use a Custom Resource construct to create your webhook:
+
+```ts
+// Create a webhook to use in your proper CI/CD
+const webhookCustomResource = new AwsCustomResource(this, 'AmplifyWebhook', {
+  onUpdate: {
+    service: 'Amplify',
+    action: 'createWebhook',
+    parameters: {
+      appId: amplifyApp.appId,
+      branchName: 'main',
+    },
+    physicalResourceId: PhysicalResourceId.of('AmplifyCustomResourceWebhook'),
+  },
+  policy: AwsCustomResourcePolicy.fromSdkCalls({
+    resources: [`${amplifyApp.arn}/webhooks/*`],
+  }),
+});
+
+// Outputs the secret deployment webhook
+webhookCustomResource.getResponseField('webhook.webhookUrl');
+```
 
 ### Other interesting features
 
@@ -290,5 +339,7 @@ To complete, there are other Next.js deployment solutions which may be interesti
 
 - [Vercel](https://vercel.com/guides/deploying-nextjs-with-vercel) (Next.js core team): probably the most user friendly infrastructure solution, if you can afford it on your project.
 - [serverless-nextjs](https://github.com/serverless-nextjs/serverless-next.js#features): very interesting initiative but seems no longer maintained unfortunately. The resources declared in this library are very similar to the one deployed by Amplify under the hood, which probably made it the cheapest solution around for a while.
-- [OpenNext project](https://open-next.js.org/) which uses the [NextJsSite SST construct](https://docs.sst.dev/constructs/NextjsSite). A promising project, but still a work in progress. This one focuses on the connector between the Next.js framework and the infrastructure, but will not provide the infrastructure as code template.
+- [OpenNext project](https://open-next.js.org/) which uses the [NetJSite SST construct](https://docs.sst.dev/constructs/NextjsSite). A promising project, but still a work in progress. This one focuses on the connector between the Next.js framework and the infrastructure, but will not provide the infrastructure as code template.
 - [JetBridge cdk-nextjs construct](https://github.com/jetbridge/cdk-nextjs), another proposal to deploy Next.js with a construct.
+
+Thanks a lot to @mamadoudicko, @alexandreperni4 and [@Antoine Apollis](https://github.com/apollisa) who co-wrote this article and tested the setup process in this [repository](https://github.com/alexandrepernin/nextjs-amplify)! We also relied a lot on this [AWS blog article](https://aws.amazon.com/blogs/mobile/deploy-a-nextjs-13-application-to-amplify-with-the-aws-cdk/) to build this guide.
