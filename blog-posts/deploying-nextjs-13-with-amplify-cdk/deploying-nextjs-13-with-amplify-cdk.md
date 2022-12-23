@@ -8,17 +8,19 @@ series:
 canonical_url:
 ---
 
-> 📜 We detail step by step how to deploy a Next.js app with a Amplify CDK construct, avoiding you all the pains.
+> 📜 How to deploy a Next.js app step by step with an Amplify CDK construct, avoiding you all the pains.
 
-> 🐝 TLDR: We just added an example app in [`swarmion`](<[https://github.com/swarmion/swarmion/pull/363](https://github.com/swarmion/swarmion/pull/363)>), so you can now bootstrap a ready-to-use Next.js project!
+> 🐝 TLDR: an example app has just been added in [`swarmion`](<[https://github.com/swarmion/swarmion/pull/363](https://github.com/swarmion/swarmion/pull/363)>), so you can now bootstrap a ready-to-use Next.js project!
 
 [Next.js](<[https://nextjs.org/](https://nextjs.org/)>) is a popular React framework to deploy web apps with advanced features like Server Side Rendering (SSR), Image optimization or Incremental Static Regeneration (ISR). In my last project, I chose this framework notably to ensure a [good SEO](https://nextjs.org/learn/seo/introduction-to-seo).
 
-To deploy the app, I had the cloud-provider constraint to use AWS with a limited budget, so neither Vercel (a safe choice, as it is the company which develops Next.js), nor a containerized solution like the managed AWS ECS Fargate service could satisfy my needs. Then, I started with a serverless hosting thanks to the [serverless-next](<[https://github.com/serverless-nextjs/serverless-next.js/](https://github.com/serverless-nextjs/serverless-next.js/)>) project, which provides a serverless plugin or a CDK construct to deploy a Next.js stack. However, this project is no more well-maintained and new Next.js features (like middlewares, etc.) are not supported.
+To deploy the app, I had the requirement to use AWS as a cloud-provider, with a limited budget, so neither Vercel (a safe choice, as it is the company which develops Next.js), nor a containerized solution like the managed AWS ECS Fargate service could satisfy my needs. Then, I started with a serverless hosting thanks to the [serverless-next](<[https://github.com/serverless-nextjs/serverless-next.js/](https://github.com/serverless-nextjs/serverless-next.js/)>) project, which provides a serverless plugin or a CDK construct to deploy a Next.js stack. However, this project is no more well-maintained and new Next.js features (like middlewares, etc.) are not supported.
 
-Here comes AWS Amplify which has just announced on November 17th to [support Next.js 12 and 13](<[https://aws.amazon.com/fr/about-aws/whats-new/2022/11/aws-amplify-hosting-support-next-js-12-13/](https://aws.amazon.com/fr/about-aws/whats-new/2022/11/aws-amplify-hosting-support-next-js-12-13/)>)! 🎉 We tested it and will explain you how to setup a production-ready app!
+Here comes AWS Amplify which has just announced on November 17th to [support Next.js 12 and 13](<[https://aws.amazon.com/fr/about-aws/whats-new/2022/11/aws-amplify-hosting-support-next-js-12-13/](https://aws.amazon.com/fr/about-aws/whats-new/2022/11/aws-amplify-hosting-support-next-js-12-13/)>) 🎉! Amplify is an AWS service to build and host full-stack applications. It uses serverless services under the hood. I tested it with @mamadoudicko and @alexandreperni4 and we will explain you how to setup a production-ready app!
 
 ## Introducing Amplify's AWS CDK
+
+AWS CDK, for AWS Cloud Development Kit, is a multi-languages framework for writing infrastructure as code and deploying it through AWS CloudFormation. Our examples will be written in Typescript, but other languages like Python, Java, C# or Go can be used as well.
 
 To deploy with the AWS CDK, you would first need to declare a `cdk.json` file at the root of your frontend repository. This allows you to tell the AWS CDK where is the entry point of the CDK app, `hosting/bin.ts` here:
 
@@ -26,6 +28,15 @@ To deploy with the AWS CDK, you would first need to declare a `cdk.json` file at
 {
   "app": "pnpm ts-node hosting/bin.ts"
 }
+```
+
+You need to install dependencies:
+
+```bash
+pnpm add --dev aws-cdk-lib
+pnpm add --dev @aws-cdk/aws-amplify-alpha
+pnpm add --dev aws-cdk-lib/aws-codebuild
+pnpm add --dev constructs
 ```
 
 In the `hosting` folder, you then need to add a `bin.ts` file to declare the `cdk` app:
@@ -70,7 +81,10 @@ export class AmplifyStack extends Stack {
     });
 
     // Attach your main branch and define the branch settings (see below)
-    const mainBranch = amplifyApp.addBranch('main', mainBranchSettings);
+    const mainBranch = amplifyApp.addBranch('main', {
+      autoBuild: true, // true to automatically build the on new pushes
+      stage: 'PRODUCTION',
+    });
 
     new CfnOutput(this, 'appId', {
       value: amplifyApp.appId,
@@ -93,14 +107,13 @@ This is needed to add a custom role that will be assumed by the Amplify resource
 import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 
 const role = new Role(this, 'AmplifyRoleWebApp', {
-      assumedBy: new ServicePrincipal('amplify.amazonaws.com'),
-      description: 'Custom role permitting resources creation from Amplify',
-      managedPolicies: [
-        // A more restricted policy than AdministratorAccess should be used
-        ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
-      ],
-    }
-
+  assumedBy: new ServicePrincipal('amplify.amazonaws.com'),
+  description: 'Custom role permitting resources creation from Amplify',
+  managedPolicies: [
+    // A more restricted policy than AdministratorAccess should be used
+    ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
+  ],
+});
 ```
 
 ### Connection to your Github repository (`sourceCodeProvider`)
@@ -192,7 +205,7 @@ export const autoBranchCreation: AutoBranchCreation = {
 
 You might want to disable the feature in production. For this, simply use `undefined` instead of this configuration.
 
-> 💡 Note that this environment can be automatically removed once the branch is deleted if the parameter `autoBranchDeletion`is set to `true`.
+> 💡 Note that this environment can be automatically removed once the branch is deleted if the parameter `autoBranchDeletion` is set to `true`.
 
 ### Configuring environment variables
 
