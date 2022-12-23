@@ -1,7 +1,7 @@
 ---
 published: false
 title: 'Deploying Next.js 13 with Amplify CDK'
-cover_image: 'https://raw.githubusercontent.com/guiyom-e/kumo-articles/master/blog-posts/deploying-nextjs-13-with-amplify-cdk/assets/cover-image.png'
+cover_image: 'https://dev-to-uploads.s3.amazonaws.com/uploads/articles/pm8b99id1yfngkax8oa3.png'
 description: 'How to deploy a Next.js app on AWS Amplify with a CDK construct'
 tags: aws, cdk, nextjs, amplify
 series:
