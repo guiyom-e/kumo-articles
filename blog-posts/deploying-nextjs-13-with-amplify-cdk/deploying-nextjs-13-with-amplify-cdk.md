@@ -30,12 +30,12 @@ To deploy with the AWS CDK, you would first need to declare a `cdk.json` file at
 }
 ```
 
-You need to install dependencies:
+You need to install these dev dependencies:
 
 ```bash
-pnpm add --dev aws-cdk-lib
-pnpm add --dev @aws-cdk/aws-amplify-alpha
-pnpm add --dev constructs
+pnpm add -D aws-cdk-lib
+pnpm add -D @aws-cdk/aws-amplify-alpha
+pnpm add -D constructs
 ```
 
 You will also need some configuration files to bootstrap the app:
