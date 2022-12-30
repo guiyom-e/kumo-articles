@@ -1,7 +1,7 @@
 ---
 published: false
 title: 'Deploying Next.js 13 with Amplify CDK'
-cover_image: 'https://raw.githubusercontent.com/guiyom-e/kumo-articles/master/blog-posts/deploying-nextjs-13-with-amplify-cdk/assets/cover-image.png'
+cover_image: 'https://dev-to-uploads.s3.amazonaws.com/uploads/articles/pm8b99id1yfngkax8oa3.png'
 description: 'How to deploy a Next.js app on AWS Amplify with a CDK construct'
 tags: aws, cdk, nextjs, amplify
 series:
@@ -30,12 +30,12 @@ To deploy with the AWS CDK, you would first need to declare a `cdk.json` file at
 }
 ```
 
-You need to install dependencies:
+You need to install these dev dependencies:
 
 ```bash
-pnpm add --dev aws-cdk-lib
-pnpm add --dev @aws-cdk/aws-amplify-alpha
-pnpm add --dev constructs
+pnpm add -D aws-cdk-lib
+pnpm add -D @aws-cdk/aws-amplify-alpha
+pnpm add -D constructs
 ```
 
 You will also need some configuration files to bootstrap the app:
