@@ -10,7 +10,7 @@ canonical_url:
 
 > 📜 How to deploy a Next.js app step by step with an Amplify CDK construct, avoiding you all the pains.
 
-> 🐝 TLDR: an example app has just been added in [`swarmion`](<[https://github.com/swarmion/swarmion/pull/363](https://github.com/swarmion/swarmion/pull/363)>), so you can now bootstrap a ready-to-use Next.js project!
+> 🐝 TLDR: an example app has just been added in [`swarmion`](<[https://github.com/swarmion/swarmion/pull/433](https://github.com/swarmion/swarmion/pull/433)>), so you can now bootstrap a ready-to-use Next.js project!
 
 [Next.js](<[https://nextjs.org/](https://nextjs.org/)>) is a popular React framework to deploy web apps with advanced features like Server Side Rendering (SSR), Image optimization or Incremental Static Regeneration (ISR). In my last project, I chose this framework notably to ensure a [good SEO](https://nextjs.org/learn/seo/introduction-to-seo).
 
@@ -327,7 +327,7 @@ In a monorepo, additional configuration is required:
 - Add `appRoot` property in the build settings, with the frontend directory path.
 - Ensure `node_modules` are correctly included in the build. In the context of a monorepo, most package managers will put the `node_modules` at the root of your repository. A nice workaround, with `pnpm`, is to set the virtual store directory inside the frontend directory when installing the project: `pnpm install --virtual-store-dir [your frontend directory]/node_modules/.pnpm`
 
-See [swarmion](https://github.com/swarmion/swarmion/pull/363) full implementation example.
+See [swarmion](https://github.com/swarmion/swarmion/pull/433) full implementation example.
 
 ## ✨ Conclusion
 
