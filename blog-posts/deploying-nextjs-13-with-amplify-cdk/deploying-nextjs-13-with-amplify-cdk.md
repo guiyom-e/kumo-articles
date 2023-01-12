@@ -10,13 +10,13 @@ canonical_url:
 
 > 📜 How to deploy a Next.js app step by step with an Amplify CDK construct, avoiding you all the pains.
 
-> 🐝 TLDR: an example app has just been added in [`swarmion`](<[https://github.com/swarmion/swarmion/pull/433](https://github.com/swarmion/swarmion/pull/433)>), so you can now bootstrap a ready-to-use Next.js project!
+> 🐝 TLDR: an example app has just been added in [`swarmion`](https://github.com/swarmion/swarmion/pull/433), so you can now bootstrap a ready-to-use Next.js project!
 
-[Next.js](<[https://nextjs.org/](https://nextjs.org/)>) is a popular React framework to deploy web apps with advanced features like Server Side Rendering (SSR), Image optimization or Incremental Static Regeneration (ISR). In my last project, I chose this framework notably to ensure a [good SEO](https://nextjs.org/learn/seo/introduction-to-seo).
+[Next.js](https://nextjs.org/) is a popular React framework to deploy web apps with advanced features like Server Side Rendering (SSR), Image optimization or Incremental Static Regeneration (ISR). In my last project, I chose this framework notably to ensure a [good SEO](https://nextjs.org/learn/seo/introduction-to-seo).
 
-To deploy the app, I had the requirement to use AWS as a cloud-provider, with a limited budget, so neither Vercel (a safe choice, as it is the company which develops Next.js), nor a containerized solution like the managed AWS ECS Fargate service could satisfy my needs. Then, I started with a serverless hosting thanks to the [serverless-next](<[https://github.com/serverless-nextjs/serverless-next.js/](https://github.com/serverless-nextjs/serverless-next.js/)>) project, which provides a serverless plugin or a CDK construct to deploy a Next.js stack. However, this project is no more well-maintained and new Next.js features (like middlewares, etc.) are not supported.
+To deploy the app, I had the requirement to use AWS as a cloud-provider, with a limited budget, so neither Vercel (a safe choice, as it is the company which develops Next.js), nor a containerized solution like the managed AWS ECS Fargate service could satisfy my needs. Then, I started with a serverless hosting thanks to the [serverless-next](https://github.com/serverless-nextjs/serverless-next.js) project, which provides a serverless plugin or a CDK construct to deploy a Next.js stack. However, this project is no more well-maintained and new Next.js features (like middlewares, etc.) are not supported.
 
-Here comes AWS Amplify which has just announced on November 17th to [support Next.js 12 and 13](<[https://aws.amazon.com/fr/about-aws/whats-new/2022/11/aws-amplify-hosting-support-next-js-12-13/](https://aws.amazon.com/fr/about-aws/whats-new/2022/11/aws-amplify-hosting-support-next-js-12-13/)>) 🎉! Amplify is an AWS service to build and host full-stack applications. It uses serverless services under the hood. I tested it with @mamadoudicko and @alexandreperni4 and we will explain you how to setup a production-ready app!
+Here comes AWS Amplify which has just announced on November 17th to [support Next.js 12 and 13](https://aws.amazon.com/fr/about-aws/whats-new/2022/11/aws-amplify-hosting-support-next-js-12-13) 🎉! Amplify is an AWS service to build and host full-stack applications. It uses serverless services under the hood. I tested it with @mamadoudicko and @alexandreperni4 and we will explain you how to setup a production-ready app!
 
 ## Introducing Amplify's AWS CDK
 
