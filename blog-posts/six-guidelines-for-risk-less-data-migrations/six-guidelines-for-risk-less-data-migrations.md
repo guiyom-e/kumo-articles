@@ -8,22 +8,22 @@ series:
 canonical_url:
 ---
 
-> *“The majority of project issues I have seen come from databases, whatever is the technology”*
+> *“The majority of project issues I have seen come from databases, whatever is the technology”* said one day one my experienced engineering manager...
 
-This is why I have been built 6 guidelines I try to follow when modifying data on tech projects. They are especially helpful when working with databases like DynamoDB with few structuring tools.
+This is why I have built 6 guidelines I try to follow when modifying data on tech projects. They are especially helpful when working with databases like DynamoDB with few tooling (no ORM, etc.).
 
 > **Data is key in business… and it is where it often fails.**
 
 Almost every app has a **database** with more or less structured data. These data items may evolve during app development, with the addition of new fields, changes to field structure, data updates, or removal of fields. These evolutions, often referred to as **migrations**, are critical as they enable the app to evolve but can also introduce bugs if not executed properly.
-A data migration **plan** is a perfect tool to mitigate the risks of these operations, as it avoids common pitfalls and ensure reliability.
+A data migration **plan** is a perfect tool to mitigate the risks of these operations, as it avoids common pitfalls and ensures reliability.  
 
 ## 📋️ First thing: have a migration protocol defined
 
 ### Define a protocol to follow in advance
 
-- What is the **RACI** ? (**Who** is responsible, who is informed, etc. ?)
-- **When** is the migration planned ?
-- **What** should be done (manually deploy a function, trigger a Continuous Deployment workflow, etc.) ?
+- Define **who** is responsible of what. You can use a responsibility matrix ([**RACI**](https://en.wikipedia.org/wiki/Responsibility_assignment_matrix))
+- Define **when** the migration should be planned
+- Define **what** should be done in precise steps (manually deploy a function, trigger a Continuous Deployment workflow, etc.) ?
 
 ### Follow the protocol
 
@@ -51,6 +51,7 @@ Given that estimation and business concerns, choose between these **2 main strat
 Only one version of a migration set (pieces of data to modify) can exist at application uptime.
 
 - Plan a **service interruption** when data will be unavailable.
+
   ✍️ Example of a user-friendly service interruption: during the migration process, the frontend application displays a "maintenance banner", and the backend is programmatically locked, to ensure no side-effect can corrupt data.
 - ✳️ Pros: quicker method, advised when building a project with low risks if some data is lost/corrupted
 - ⚠️ Risks:
@@ -115,9 +116,9 @@ Handle old and new versions inside the migration set.
 - Test the migration script (with unit tests) to verify its functionality.
   - Check that data items of the migration set are correctly selected
   - Check all edge cases
-  - Try to keep the migration script simple, even if you need to run several “sub-migrations”
-  - Writing integration tests can help catch regressions
-  - Use dedicated environments to test the migration plan
+- Use dedicated environments to test the migration plan
+  - Non-production environments can help to find bugs, all the more if data is ISO-prod.
+  - If it is not possible to test a scenario with production data, you can at least run scripts to check for errors, or run migrations in dry-run
 
 ## 📆 The plan includes communication with stakeholders
 
@@ -143,11 +144,7 @@ Explicit the risks of the migration and consider their concerns
 
 If anything goes wrong, you should be *able to restore* your database to a correct state.
 
-- Cloud providers have services dedicated to backups (e.g. [AWS Backup](https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html) if you are using AWS, [Actifio](https://www.actifio.com/) on GCP, etc.)
-- Database systems often come with their own backup solution:
-  - PostgreSQL has [`pg_dump`](https://www.postgresql.org/docs/current/backup-dump.html) to export data that can be restored later.
-  - DynamoDB has a specific [backup feature](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CreateBackup.html)
-  - etc.
+- Cloud providers have services dedicated to backups (e.g. [AWS Backup](https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html) if you are using AWS, [Actifio](https://www.actifio.com/) on GCP, etc.) and database systems often come with their own backup solution.
 - Practice restoring your data
 - Be pragmatic. Can you afford to restore your data?
   - Some data items might have been updated during the process
@@ -157,7 +154,7 @@ If anything goes wrong, you should be *able to restore* your database to a corre
 ### Write a “down” migration, as well as the “up” migration… or at least a Plan B
 
 How many times I've heard (or said) "It won't fail, no need of plan B"... and it finally failed ?
-I won't go through implementation details here (and a lot of ORMs have dedicated tools for this), the main point is "Don't forget Murphy's Law!"
+I won't go through implementation details here (and a lot of ORMs have dedicated tools for this), the main point is "Don't be overconfident"!
 
 ## 🧱 The plan includes a check that everything is ok in the end
 
@@ -165,7 +162,7 @@ I won't go through implementation details here (and a lot of ORMs have dedicated
 
 - If possible, save the changes and the version of items during the migration process.
 - Keep track of migration applications in each environment.
-- The versions must be strictly increasing (in a specific order relationship) and deterministic to be able to compare versions.
+- The versions must be strictly increasing (in a specific order relationship) and deterministic to be able to compare versions. For instance, with an incremented integer or a timestamp and a reference to the previous version.
 
 ### Remove data after complete validation only
 
@@ -184,4 +181,4 @@ Although, this does not guarantee that you will end up with a successful migrati
 
 These 6 guidelines are just an attempt to sum-up what to care about when applying data migrations. They can also apply to application deployments or whatever operation that introduces a breaking change. But the main learning could also be **capitalize on knowledge** to avoid reproducing the same mistakes !
 
-Want to share your own tips or tech convictions? Don't hesitate to comment on this posts 😉
+Want to share your own tips or tech convictions? Don't hesitate to comment on this post 😉
